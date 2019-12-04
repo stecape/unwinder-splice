@@ -31,7 +31,7 @@ app.post('/api/getUNWData', (req,res) => {
   //chiamata a funzione di update stato lato Python
   axios({
     method: 'post',
-    url: 'http://172.17.5.31/awp/React/ProbeData.html',
+    url: 'http://172.17.5.31/awp/React/data/ProbeData.html',
     data: req.body,
   }).then((results) =>{
       var ans = he.decode(results.data)
