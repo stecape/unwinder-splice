@@ -3,12 +3,131 @@ const bodyParser = require('body-parser')
 const path = require('path')
 const axios = require('axios')
 const he = require('he')
+const snap7 = require('node-snap7')
 
 const app = express()
 
 // Serve the static files from the React app
 app.use(express.static(path.join(__dirname, 'client/build')))
 app.use(bodyParser.json())
+
+var buffer
+var s7client = new snap7.S7Client()
+var datiPLC = {}
+
+connectToPLC = function(){
+  var connecting = setInterval(function(){
+    s7client.ConnectTo('172.17.5.31', 0, 1, function(err) {
+      if(err)
+          return console.log(' >> Connection failed. Code #' + err + ' - ' + s7client.ErrorText(err))
+   
+      console.log("connected: ", s7client.Connected())
+      clearInterval(connecting) 
+      getData()
+  })
+  },5000)
+}
+
+getData = function(){
+  var gettingData = setInterval(function(){
+    if(s7client.Connected()){
+      // Read the first byte from PLC process outputs...
+      s7client.DBRead(14, 0, 305, function(err, res) {
+        if(err){
+          s7client.Disconnect()
+          clearInterval(gettingData)
+          console.log(' >> ABRead failed. Code #' + err + ' - ' + s7client.ErrorText(err))
+          connecting()
+          return
+        }
+
+        //Qui devo interpretare il buffer 
+        buffer=res
+        var ProbeData = {}
+        var numbers = []
+
+        //Real
+        for(i=0; i<=276; i=i+4){
+          var data = [buffer[i], buffer[i+1], buffer[i+2], buffer[i+3]]
+          // Create a buffer
+          var buf = new ArrayBuffer(4)
+          // Create a data view of it
+          var view = new DataView(buf)
+          // set bytes
+          data.forEach(function (b, i) {
+            view.setUint8(i, b)
+          })
+          ProbeData["Real_"+(i/4)] = view.getFloat32(0)
+          numbers.push(view.getFloat32(0))
+        }
+
+        //Int
+        for(i=280; i<=298; i=i+2){
+          var data = [buffer[i], buffer[i+1]]
+          // Create a buffer
+          var buf = new ArrayBuffer(2)
+          // Create a data view of it
+          var view = new DataView(buf)
+          // set bytes
+          data.forEach(function (b, i) {
+            view.setUint8(i, b)
+          })
+          ProbeData["Int_"+((i-280)/2)] = view.getUint16(0)
+          numbers.push(view.getUint16(0))
+        }
+
+        //Bool
+        var data = [buffer[300], buffer[301], buffer[302], buffer[303]]
+        // Create a buffer
+        var buf = new ArrayBuffer(4)
+        // Create a data view of it
+        var view = new DataView(buf)
+        // set bytes
+        data.forEach(function (b, i) {
+          view.setUint8(i, b)
+        })
+        for(u = 0; u < 20; ++u)
+          ProbeData["Bool_"+u] = (view.getUint32(0) >> u) & 1
+
+        //Index
+        var data = [buffer[304], buffer[305], buffer[306], buffer[307]]
+        // Create a buffer
+        var buf = new ArrayBuffer(4)
+        // Create a data view of it
+        var view = new DataView(buf)
+        // set bytes
+        data.forEach(function (b, i) {
+          view.setUint8(i, b)
+        })
+        ProbeData["index"] = view.getUint16(0)
+        datiPLC["ProbeData"]=ProbeData
+      })
+    }
+  },800)
+}
+
+connectToPLC()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Update valori
 app.post('/api/getData', (req,res) => {
     //chiamata a funzione di update stato lato Python
@@ -28,22 +147,7 @@ app.post('/api/getData', (req,res) => {
 
 // Update valori da PLC 1UW
 app.post('/api/getUNWData', (req,res) => {
-  //chiamata a funzione di update stato lato Python
-  axios({
-    method: 'post',
-    url: 'http://172.17.5.31/awp/React/data/ProbeData.html',
-    data: req.body,
-  }).then((results) =>{
-      var ans = he.decode(results.data)
-      ans = ans.substring(ans.indexOf("{"))
-      ans = JSON.parse(ans.substring(0,ans.lastIndexOf("}")+1).trim())
-      res.status(200).send(ans)
-    })
-
-  // axios.get('http://127.0.0.1:3002/getData')
-  //   .then((results) => {
-  //     res.status(200).send(JSON.parse(results.data.replace(/'/g, '')))
-  //   })
+      res.status(200).send(datiPLC)
 })
 
 // impostazione setpoint

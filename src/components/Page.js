@@ -49,7 +49,7 @@ export default class Page extends Component {
 
   componentDidMount() {
     this.getData()
-    this.interval = setInterval(this.getData, 1000)
+    this.interval = setInterval(this.getData, 800)
   }
 
   componentWillUnmount() {

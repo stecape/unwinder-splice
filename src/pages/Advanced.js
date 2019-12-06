@@ -32,7 +32,9 @@ export default class Advanced extends Component {
       db2: 0,
       rb2: 0,
       xb2: 0,
-      yb2: 0
+      yb2: 0,
+      //Direzione macchina
+      md: 0
     };
     this.handleChange = this.handleChange.bind(this)
     this.returnValue = this.returnValue.bind(this)
@@ -67,28 +69,13 @@ export default class Advanced extends Component {
     Real_5: "rb1",
     Real_6: "db1",
     Real_7: "rb2",
-    Real_8: "db2"
+    Real_8: "db2",
+    Real_9: "md"
   }
 
 
 
   render() {
-    var as = {
-      Name: 'Angolo stella',
-      conversion: {
-        HMIunit: '°',
-        HMIDecimals: 2,
-      },
-      limits: {
-        HMIMin: 0,
-        HMIMax: 360
-      },
-      actual: {
-        HMIVal: this.state.as
-      },
-      classe: 'Act'
-    }
-
     return (
       <div>
         <Page
@@ -100,7 +87,7 @@ export default class Advanced extends Component {
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6} md={6}>
               <Grid container spacing={1} direction="column" alignItems="stretch">
-                <Actual tag={as} />
+                
               </Grid>
             </Grid>
           </Grid>

@@ -22,6 +22,9 @@ function radTOdeg(rad) {
     //Fotocellula
     var af = data.af
     var rf = data.rf
+
+    //Direzione macchina
+    var md = data.md
 /*   
     if (dc === 0 && al === 2 && sf === 1) {
       //Calcolo Raggio Bobina 1 Cambio Basso
@@ -88,6 +91,9 @@ function radTOdeg(rad) {
       //Bobina 2
       xb2: xb2,
       yb2: yb2,
+
+      //Direzione macchina
+      md: md
     };
   };
   
